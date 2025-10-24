@@ -1,4 +1,5 @@
 package ru.tbank.education.school.lesson7.practise.task1// 6) GROUPBY — топ категорий по расходам
+
 /**
  * Задание: Найди топ-3 категорий по расходам.
  *
@@ -12,6 +13,15 @@ package ru.tbank.education.school.lesson7.practise.task1// 6) GROUPBY — топ
  */
 data class Transfer(val category: String, val amount: Double)
 
-fun top3Categories(transfer: List<Transfer>): List<Pair<String, Double>> {
-    TODO()
+fun top3Categories(transfers: List<Transfer>): List<Pair<String, Double>> {
+    val categoriesGroups = transfers.groupBy { it.category }
+
+    val sums = categoriesGroups.mapValues { (_, transfers) ->
+        transfers.sumOf { it.amount }
+    }
+
+    return sums
+        .toList()
+        .sortedByDescending { it.second }
+        .take(3)
 }
