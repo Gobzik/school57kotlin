@@ -1,5 +1,7 @@
 package ru.tbank.education.school.lesson8.homework.payments
 
+import java.time.YearMonth
+
 class PaymentProcessor {
 
     /**
@@ -97,14 +99,15 @@ class PaymentProcessor {
      * Проверяет, действителен ли срок действия карты.
      */
     private fun isValidExpiry(month: Int, year: Int): Boolean {
-        val currentYear = 2025
-        val currentMonth = 11
+        if (month !in 1..12) return false
+
+        val currentYear = YearMonth.now().year
+        val currentMonth = YearMonth.now().monthValue
 
         return when {
             year < currentYear -> false
-            year == currentYear -> month in 1..12 && month >= currentMonth
-            year > currentYear -> month in 1..12
-            else -> false
+            year == currentYear -> month >= currentMonth
+            else -> true
         }
     }
 
