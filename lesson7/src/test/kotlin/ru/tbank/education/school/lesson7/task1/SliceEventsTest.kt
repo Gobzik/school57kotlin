@@ -64,4 +64,3 @@ class SliceEventsTest {
         assertEquals(1, todayEvents.size)
     }
 }
-

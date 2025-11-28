@@ -1,0 +1,40 @@
+build:
+  maxIssues: 100
+  weights:
+    complexity: 2
+    LongParameterList: 1
+    style: 1
+    comments: 1
+
+complexity:
+  active: true
+  TooManyFunctions:
+    active: true
+    threshold: 20
+
+style:
+  active: true
+  MagicNumber:
+    active: false
+  WildcardImport:
+    active: false
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+  UndocumentedPublicProperty:
+    active: false
+  MatchingDeclarationName:
+    active: false
+  Filename:
+    active: false
+  FunctionNaming:
+    active: true
+  FunctionParameterNaming:
+    active: true
+
+comments:
+  active: false
+
+formatting:
+  active: false

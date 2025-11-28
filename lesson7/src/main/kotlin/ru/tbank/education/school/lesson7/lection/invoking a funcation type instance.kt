@@ -8,11 +8,11 @@ fun main() {
     val intPlus: Int.(Int) -> Int = Int::plus
 
     // Вызов через invoke()
-    println(stringPlus.invoke("<-", "->"))      // <->
-    println(stringPlus("Hello, ", "world!"))    // Hello, world!
+    println(stringPlus.invoke("<-", "->")) // <->
+    println(stringPlus("Hello, ", "world!")) // Hello, world!
 
     // Разные способы вызова функции Int.(Int) -> Int
-    println(intPlus.invoke(1, 1))   // 2
-    println(intPlus(1, 2))          // 3
-    println(2.intPlus(3))           // 5
+    println(intPlus.invoke(1, 1)) // 2
+    println(intPlus(1, 2)) // 3
+    println(2.intPlus(3)) // 5
 }

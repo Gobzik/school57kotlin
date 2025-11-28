@@ -81,6 +81,11 @@ class PaymentProcessor {
                         PaymentResult("FAILED", "Card is blocked")
                     }
 
+                    gatewayResult.message?.contains("transaction limit", ignoreCase = true) == true -> {
+                        log("FAILED", "Payment failed: transaction limit exceeded")
+                        PaymentResult("FAILED", "Transaction limit exceeded")
+                    }
+
                     else -> {
                         log("FAILED", "Payment declined: ${gatewayResult.message}")
                         PaymentResult("FAILED", gatewayResult.message ?: "Unknown error")
@@ -98,7 +103,7 @@ class PaymentProcessor {
     /**
      * Проверяет, действителен ли срок действия карты.
      */
-    private fun isValidExpiry(month: Int, year: Int): Boolean {
+    fun isValidExpiry(month: Int, year: Int): Boolean {
         if (month !in 1..12) return false
 
         val currentYear = YearMonth.now().year
@@ -114,7 +119,7 @@ class PaymentProcessor {
     /**
      * Проверка на подозрительные номера карт (например, тестовые)
      */
-    private fun isSuspiciousCard(cardNumber: String): Boolean {
+    fun isSuspiciousCard(cardNumber: String): Boolean {
         val suspiciousPrefixes = listOf("4444", "5555", "1111", "9999")
         return suspiciousPrefixes.any { cardNumber.startsWith(it) } ||
                 isLuhnInvalid(cardNumber)
@@ -123,7 +128,7 @@ class PaymentProcessor {
     /**
      * Проверка номера карты по алгоритму Луна.
      */
-    private fun isLuhnInvalid(cardNumber: String): Boolean {
+    fun isLuhnInvalid(cardNumber: String): Boolean {
         if (cardNumber.length < 13) return true
 
         var sum = 0
@@ -146,7 +151,7 @@ class PaymentProcessor {
     /**
      * Имитация внешнего шлюза — внутренняя логика
      */
-    private fun tryChargeGateway(cardNumber: String, amount: Int): GatewayResult {
+    fun tryChargeGateway(cardNumber: String, amount: Int): GatewayResult {
         // Имитация случайных сбоев
         if (amount > 100_000) {
             return GatewayResult(false, "Transaction limit exceeded")
@@ -213,9 +218,11 @@ class PaymentProcessor {
             } catch (e: IllegalArgumentException) {
                 log("REJECTED", "Invalid data at index $index: ${e.message}")
                 results.add(PaymentResult("REJECTED", e.message ?: "Invalid input"))
+                failCount++
             } catch (e: Exception) {
                 log("CRITICAL", "Unexpected error at index $index: ${e.message}")
                 results.add(PaymentResult("FAILED", "Internal error"))
+                failCount++
             }
         }
 

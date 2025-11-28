@@ -1,8 +1,9 @@
 package ru.tbank.education.school.lesson7.practise.task4
 
 fun riskyOperation(): String {
-    if (Math.random() < 0.5)
+    if (Math.random() < 0.5) {
         throw RuntimeException("Что-то сломалось!")
+    }
     return "На этот раз повезло, ошибки нет!"
 }
 
@@ -23,4 +24,3 @@ fun main() {
         .onSuccess { println("Результат: $it") }
         .onFailure { println("Ошибка: ${it.message}") }
 }
-
