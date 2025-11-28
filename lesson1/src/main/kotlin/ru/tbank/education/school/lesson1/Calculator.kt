@@ -4,15 +4,15 @@ package ru.tbank.education.school.lesson1
  * Метод для вычисления простых арифметических операций.
  */
 fun calculate(a: Double, b: Double, operation: OperationType = OperationType.ADD): Double? {
-    when (operation) {
-        OperationType.ADD -> return a + b
-        OperationType.SUBTRACT -> return a - b
-        OperationType.MULTIPLY -> return a * b
+    return when (operation) {
+        OperationType.ADD -> a + b
+        OperationType.SUBTRACT -> a - b
+        OperationType.MULTIPLY -> a * b
         OperationType.DIVIDE -> {
-            if (b == 0.0) return null
-            else return a / b
+            if (b == 0.0) null
+            else a / b
         }
-
+        else -> throw IllegalArgumentException("Unknown operation: $operation")
     }
 }
 
@@ -24,19 +24,23 @@ fun calculate(a: Double, b: Double, operation: OperationType = OperationType.ADD
 @Suppress("ReturnCount")
 fun String.calculate(): Double? {
     this.let {
-        var res = 0.0
-        val a = this.split(" ")[0].toDouble() ?: 0.0
-        val b = this.split(" ")[1] ?: "+"
-        val c: Double = this.split(" ")[2].toDouble() ?: 0.0
-        when (b) {
-            "+" -> return a + c
-            "-" -> return a - c
-            "*" -> return a * c
+        val parts = this.split(" ")
+        if (parts.size < 3) return null
+
+        val a = parts[0].toDoubleOrNull() ?: return null
+        val operator = parts[1]
+        val c = parts[2].toDoubleOrNull() ?: return null
+
+        return when (operator) {
+            "+" -> a + c
+            "-" -> a - c
+            "*" -> a * c
             "/" -> {
-                if (c == 0.0) return null
-                else return a / c
+                if (c == 0.0) null
+                else a / c
             }
+            else -> null // Неизвестный оператор
         }
     }
-    TODO()
+    return null
 }

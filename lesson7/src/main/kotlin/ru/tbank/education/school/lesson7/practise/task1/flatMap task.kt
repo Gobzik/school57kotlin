@@ -13,7 +13,13 @@ package ru.tbank.education.school.lesson7.practise.task1
  */
 data class Order(val id: String, val items: List<OrderItem>)
 data class OrderItem(val productId: String, val quantity: Int, val pricePerUnit: Double)
-data class LineItem(val orderId: String, val productId: String, val quantity: Int, val total: Double, val totalWithTax: Double)
+data class LineItem(
+    val orderId: String,
+    val productId: String,
+    val quantity: Int,
+    val total: Double,
+    val totalWithTax: Double
+)
 
 fun expandOrders(orders: List<Order>, tax: Double = 0.20): List<LineItem> {
     TODO()

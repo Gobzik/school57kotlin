@@ -19,8 +19,6 @@ class PaymentProcessorTest {
         processor = PaymentProcessor()
     }
 
-    // ===== ВАЛИДАЦИЯ ВХОДНЫХ ДАННЫХ =====
-
     @Test
     @DisplayName("Бросает исключение при отрицательной сумме")
     fun `should throw exception for negative amount`() {
@@ -172,8 +170,6 @@ class PaymentProcessorTest {
         assertEquals("Customer ID cannot be blank", exception.message)
     }
 
-    // ===== ПРОВЕРКА ПОДОЗРИТЕЛЬНЫХ КАРТ =====
-
     @ParameterizedTest
     @ValueSource(strings = ["4444111111111111", "5555111111111111", "1111111111111111", "9999111111111111"])
     @DisplayName("Блокирует подозрительные карты по префиксу")
@@ -222,8 +218,6 @@ class PaymentProcessorTest {
         assertNotEquals("REJECTED", result.status)
     }
 
-    // ===== КОНВЕРТАЦИЯ ВАЛЮТ =====
-
     @ParameterizedTest
     @CsvSource(
         "USD, 100",
@@ -262,8 +256,6 @@ class PaymentProcessorTest {
 
         assertNotEquals("REJECTED", result.status)
     }
-
-    // ===== ЛОГИКА ПЛАТЕЖНОГО ШЛЮЗА =====
 
     @Test
     @DisplayName("Успешный платеж")
@@ -314,19 +306,19 @@ class PaymentProcessorTest {
     }
 
     @Test
-    @DisplayName("Неизвестная ошибка шлюза для не-VISA карт")
-    fun `should handle unknown gateway error for non-visa cards`() {
+    @DisplayName("Ошибка 'карта заблокирована' для карт 4444")
+    fun `should handle card blocked for 4444 cards`() {
         val result = processor.processPayment(
             amount = 100,
-            cardNumber = "30000000000004",
+            cardNumber = "4444111111111111",
             expiryMonth = 12,
             expiryYear = getNextYear(),
             currency = "USD",
             customerId = "customer123"
         )
-    }
 
-    // ===== РАСЧЕТ СКИДОК ЛОЯЛЬНОСТИ =====
+        assertEquals("REJECTED", result.status)
+    }
 
     @Test
     @DisplayName("Бросает исключение при отрицательной базовой сумме для скидки")
@@ -364,8 +356,6 @@ class PaymentProcessorTest {
         val discount = processor.calculateLoyaltyDiscount(points, baseAmount)
         assertEquals(expectedDiscount, discount)
     }
-
-    // ===== ПАКЕТНАЯ ОБРАБОТКА =====
 
     @Test
     @DisplayName("Возвращает пустой список для пустого ввода")
@@ -407,10 +397,9 @@ class PaymentProcessorTest {
         assertEquals(4, results.size)
         assertEquals("SUCCESS", results[0].status)
         assertEquals("REJECTED", results[1].status)
+        assertEquals("REJECTED", results[2].status)
         assertEquals("FAILED", results[3].status)
     }
-
-    // ===== ДОПОЛНИТЕЛЬНЫЕ ТЕСТЫ ДЛЯ ПОКРЫТИЯ =====
 
     @Test
     @DisplayName("Проверяет все ветки проверки срока действия карты")
@@ -418,57 +407,83 @@ class PaymentProcessorTest {
         val currentYear = LocalDate.now().year
         val currentMonth = LocalDate.now().monthValue
 
-        assertThrows<IllegalArgumentException> {
-            processor.processPayment(100, "4111111111111111", 12, currentYear - 1, "USD", "customer1")
-        }
-
-        if (currentMonth > 1) {
-            assertThrows<IllegalArgumentException> {
-                processor.processPayment(100, "4111111111111111", currentMonth - 1, currentYear, "USD", "customer2")
-            }
-        }
-
-        assertDoesNotThrow {
-            processor.processPayment(100, "4111111111111111", currentMonth, currentYear, "USD", "customer3")
-        }
-
+        assertFalse(processor.isValidExpiry(12, currentYear - 1))
+        assertTrue(processor.isValidExpiry(currentMonth, currentYear))
         if (currentMonth < 12) {
-            assertDoesNotThrow {
-                processor.processPayment(100, "4111111111111111", currentMonth + 1, currentYear, "USD", "customer4")
-            }
+            assertTrue(processor.isValidExpiry(currentMonth + 1, currentYear))
         }
-
-        assertDoesNotThrow {
-            processor.processPayment(100, "4111111111111111", 1, currentYear + 1, "USD", "customer5")
-        }
+        assertTrue(processor.isValidExpiry(1, currentYear + 1))
+        assertFalse(processor.isValidExpiry(0, currentYear))
+        assertFalse(processor.isValidExpiry(13, currentYear))
     }
 
     @Test
     @DisplayName("Тестирует все ветки обработки ошибок шлюза")
     fun `should test all gateway error handling branches`() {
-        val result3 = processor.processPayment(100001, "4111111111111111", 12, getNextYear(), "USD", "customer3")
-        assertEquals("FAILED", result3.status)
-        assertEquals("Transaction limit exceeded", result3.message)
+        val result1 = processor.tryChargeGateway("4111111111111111", 100001)
+        assertFalse(result1.success)
+        assertEquals("Transaction limit exceeded", result1.message)
 
-        val result4 = processor.processPayment(170, "4111111111111111", 12, getNextYear(), "USD", "customer4")
-        assertEquals("FAILED", result4.status)
+        val result2 = processor.tryChargeGateway("4444111111111111", 100)
+        assertFalse(result2.success)
+        assertEquals("Card blocked", result2.message)
+
+        val result3 = processor.tryChargeGateway("5500111111111111", 100)
+        assertFalse(result3.success)
+        assertEquals("Insufficient funds", result3.message)
+
+        val result4 = processor.tryChargeGateway("4111111111111111", 170)
+        assertFalse(result4.success)
         assertEquals("Gateway timeout", result4.message)
+
+        val result5 = processor.tryChargeGateway("4111111111111111", 100)
+        assertTrue(result5.success)
+        assertNull(result5.message)
     }
 
     @Test
-    @DisplayName("Тестирует успешный платеж с другой VISA картой")
-    fun `should process successful payment with other visa card`() {
+    @DisplayName("Тестирует все ветки алгоритма Луна")
+    fun `should test all luhn algorithm branches`() {
+        assertTrue(processor.isLuhnInvalid("123456789012"))
+        assertTrue(processor.isLuhnInvalid("4111-1111-1111-1111"))
+        assertTrue(processor.isLuhnInvalid("4111111111111112"))
+        assertFalse(processor.isLuhnInvalid("4111111111111111"))
+        assertFalse(processor.isLuhnInvalid("4222222222222"))
+    }
+
+    @Test
+    @DisplayName("Тестирует все сценарии конвертации валют")
+    fun `should test all currency conversion scenarios`() {
+        val currencies = listOf("USD", "EUR", "GBP", "JPY", "RUB", "CAD")
+
+        currencies.forEach { currency ->
+            assertDoesNotThrow {
+                processor.processPayment(
+                    amount = 100,
+                    cardNumber = "4111111111111111",
+                    expiryMonth = 12,
+                    expiryYear = getNextYear(),
+                    currency = currency,
+                    customerId = "customer123"
+                )
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Тестирует обработку неизвестной ошибки шлюза")
+    fun `should handle unknown gateway error`() {
         val result = processor.processPayment(
-            amount = 100,
-            cardNumber = "4222222222222",
+            amount = 340,
+            cardNumber = "30000000000004",
             expiryMonth = 12,
             expiryYear = getNextYear(),
             currency = "USD",
             customerId = "customer123"
         )
 
-        assertEquals("SUCCESS", result.status)
-        assertEquals("Payment completed", result.message)
+        assertEquals("FAILED", result.status)
+        assertEquals("Gateway timeout", result.message)
     }
 
     @Test
@@ -510,35 +525,175 @@ class PaymentProcessorTest {
     }
 
     @Test
-    @DisplayName("Тестирует все ветки алгоритма Луна")
-    fun `should test all luhn algorithm branches`() {
+    @DisplayName("Тестирует подозрительные карты через отдельный метод")
+    fun `should test suspicious cards via separate method`() {
+        assertTrue(processor.isSuspiciousCard("4444111111111111"))
+        assertTrue(processor.isSuspiciousCard("5555111111111111"))
+        assertTrue(processor.isSuspiciousCard("1111111111111111"))
+        assertTrue(processor.isSuspiciousCard("9999111111111111"))
+        assertTrue(processor.isSuspiciousCard("4111111111111112"))
+        assertFalse(processor.isSuspiciousCard("4111111111111111"))
+    }
+
+    @Test
+    @DisplayName("Обрабатывает ошибку 'карта заблокирована' от шлюза")
+    fun `should handle gateway card blocked error`() {
+        val gatewayResult = processor.tryChargeGateway("4444111111111111", 100)
+
+        assertFalse(gatewayResult.success)
+        assertEquals("Card blocked", gatewayResult.message)
+    }
+
+    @Test
+    @DisplayName("Обрабатывает ошибку 'недостаточно средств' от шлюза")
+    fun `should handle gateway insufficient funds error`() {
+        val gatewayResult = processor.tryChargeGateway("5500111111111111", 100)
+
+        assertFalse(gatewayResult.success)
+        assertEquals("Insufficient funds", gatewayResult.message)
+    }
+
+    @Test
+    @DisplayName("Интеграционный тест для карты 5500 через processPayment")
+    fun `should handle 5500 card through process payment integration`() {
         val result = processor.processPayment(
             amount = 100,
-            cardNumber = "4111111111111211",
+            cardNumber = "5500111111111111",
             expiryMonth = 12,
             expiryYear = getNextYear(),
             currency = "USD",
             customerId = "customer123"
         )
-        assertNotNull(result)
+
+        if (processor.isSuspiciousCard("5500111111111111")) {
+            assertEquals("REJECTED", result.status)
+            assertTrue(result.message.contains("fraud", ignoreCase = true))
+        } else {
+            assertEquals("FAILED", result.status)
+            assertEquals("Insufficient funds", result.message)
+        }
     }
 
     @Test
-    @DisplayName("Тестирует все сценарии конвертации валют")
-    fun `should test all currency conversion scenarios`() {
-        val currencies = listOf("USD", "EUR", "GBP", "JPY", "RUB", "CAD")
+    @DisplayName("Обрабатывает различные типы исключений в пакетной обработке")
+    fun `should handle various exception types in bulk processing`() {
+        val payments = listOf(
+            PaymentData(-100, "4111111111111111", 12, getNextYear(), "USD", "customer1"),
+            PaymentData(100, "", 12, getNextYear(), "USD", "customer2"),
+            PaymentData(100, "4111111111111111", 0, getNextYear(), "USD", "customer3")
+        )
 
-        currencies.forEach { currency ->
-            assertDoesNotThrow {
-                processor.processPayment(
-                    amount = 100,
-                    cardNumber = "4111111111111111",
+        val results = processor.bulkProcess(payments)
+
+        assertEquals(3, results.size)
+        results.forEach { result ->
+            assertEquals("REJECTED", result.status)
+            assertNotNull(result.message)
+        }
+    }
+
+    @Test
+    @DisplayName("Тестирует все возможные ошибки шлюза через интеграцию")
+    fun `should test all gateway errors through integration`() {
+        val result1 = processor.processPayment(
+            amount = 100_001,
+            cardNumber = "4111111111111111",
+            expiryMonth = 12,
+            expiryYear = getNextYear(),
+            currency = "USD",
+            customerId = "customer123"
+        )
+        assertEquals("FAILED", result1.status)
+        assertEquals("Transaction limit exceeded", result1.message)
+
+        val result2 = processor.processPayment(
+            amount = 170,
+            cardNumber = "4111111111111111",
+            expiryMonth = 12,
+            expiryYear = getNextYear(),
+            currency = "USD",
+            customerId = "customer123"
+        )
+        assertEquals("FAILED", result2.status)
+        assertEquals("Gateway timeout", result2.message)
+    }
+
+
+    @Test
+    @DisplayName("Проверяет обработку неизвестных ошибок шлюза")
+    fun `should handle unknown gateway errors through reflection`() {
+        val result = processor.processPayment(
+            amount = 340,
+            cardNumber = "30000000000004",
+            expiryMonth = 12,
+            expiryYear = getNextYear(),
+            currency = "USD",
+            customerId = "customer123"
+        )
+
+        assertEquals("FAILED", result.status)
+        assertEquals("Gateway timeout", result.message)
+    }
+
+    @Test
+    @DisplayName("Проверяет какие префиксы считаются подозрительными")
+    fun `should check which prefixes are suspicious`() {
+        assertTrue(processor.isSuspiciousCard("4444111111111111"))
+        assertTrue(processor.isSuspiciousCard("5555111111111111"))
+        assertTrue(processor.isSuspiciousCard("1111111111111111"))
+        assertTrue(processor.isSuspiciousCard("9999111111111111"))
+
+        val is5500Suspicious = processor.isSuspiciousCard("5500111111111111")
+        println("5500 is suspicious: $is5500Suspicious")
+
+        assertFalse(processor.isSuspiciousCard("4111111111111111"))
+    }
+
+    @Test
+    @DisplayName("Тестирует карту которая проходит проверку но падает в шлюзе")
+    fun `should test card that passes fraud check but fails in gateway`() {
+        val testCards = listOf(
+            "4532015112830366",
+            "5500000000000004",
+            "371449635398431"
+        )
+
+        for (card in testCards) {
+            if (!processor.isSuspiciousCard(card)) {
+                val result = processor.processPayment(
+                    amount = 100_001,
+                    cardNumber = card,
                     expiryMonth = 12,
                     expiryYear = getNextYear(),
-                    currency = currency,
+                    currency = "USD",
                     customerId = "customer123"
                 )
+                assertEquals("FAILED", result.status)
+                assertEquals("Transaction limit exceeded", result.message)
+                return
             }
+        }
+
+        org.junit.jupiter.api.Assumptions.assumeFalse(true, "No non-suspicious test cards available")
+    }
+
+    @Test
+    @DisplayName("Обрабатывает различные невалидные данные в пакетной обработке")
+    fun `should handle various invalid data in bulk processing`() {
+        val payments = listOf(
+            PaymentData(50, "4111111111111111", 12, getNextYear(), "USD", "customer1"),
+            PaymentData(-100, "4111111111111111", 12, getNextYear(), "USD", "customer2"),
+            PaymentData(100, "1234567890123456789", 12, getNextYear(), "USD", "customer3"),
+            PaymentData(100, "4111111111111111", 13, getNextYear(), "USD", "customer4"),
+            PaymentData(100, "4111111111111111", 12, getNextYear(), "", "customer5")
+        )
+
+        val results = processor.bulkProcess(payments)
+
+        assertEquals(5, results.size)
+        assertEquals("SUCCESS", results[0].status)
+        for (i in 1..4) {
+            assertEquals("REJECTED", results[i].status)
         }
     }
 

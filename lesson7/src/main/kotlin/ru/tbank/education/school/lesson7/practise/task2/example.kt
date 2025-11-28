@@ -30,8 +30,9 @@ fun <A, R> retry(
 }
 
 fun unstableOperation(id: Int): String {
-    if (Math.random() < 0.5)
+    if (Math.random() < 0.5) {
         error("Случайный сбой")
+    }
     return "Результат для $id"
 }
 

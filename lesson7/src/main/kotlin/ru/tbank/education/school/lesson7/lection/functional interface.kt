@@ -15,7 +15,7 @@ fun main() {
     val multiplyOperation = object : Operation {
         override fun apply(a: Int, b: Int): Int = a * b
     }
-    
-    println(calculate(a = 5, b = 3, operation = sumOperation))       // 8
-    println(calculate(a = 5, b = 3, operation = multiplyOperation))  // 15
+
+    println(calculate(a = 5, b = 3, operation = sumOperation)) // 8
+    println(calculate(a = 5, b = 3, operation = multiplyOperation)) // 15
 }
