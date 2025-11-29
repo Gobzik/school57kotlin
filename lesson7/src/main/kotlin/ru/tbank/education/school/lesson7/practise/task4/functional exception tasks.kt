@@ -22,7 +22,6 @@ package ru.tbank.education.school.lesson7.practise.task4
  */
 fun parseIntSafe(value: String): Result<Int> = TODO()
 
-
 /**
  * Задание 2. Значение по умолчанию
  *
@@ -40,7 +39,6 @@ fun parseIntSafe(value: String): Result<Int> = TODO()
  * ```
  */
 fun parseWithDefault(input: String, default: Int): Int = TODO()
-
 
 /**
  * Задание 3. Логирование через onFailure
