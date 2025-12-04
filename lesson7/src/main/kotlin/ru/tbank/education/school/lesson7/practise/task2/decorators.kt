@@ -20,7 +20,17 @@ package ru.tbank.education.school.lesson7.practise.task2
  * printMessage("C") // выполняется
  */
 fun <A, R> limitRate(intervalMs: Long, f: (A) -> R): (A) -> R? {
-    TODO()
+    var lastCallTime: Long = 0
+
+    return { arg: A ->
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastCallTime >= intervalMs) {
+            lastCallTime = currentTime
+            f(arg)
+        } else {
+            null
+        }
+    }
 }
 
 
@@ -40,7 +50,13 @@ fun <A, R> limitRate(intervalMs: Long, f: (A) -> R): (A) -> R? {
  * println(safeDivide(0))  // Failure(java.lang.ArithmeticException: / by zero)
  */
 fun <A, R> safeCall(f: (A) -> R): (A) -> Result<R> {
-    TODO()
+    return {arg: A ->
+        try {
+            Result.success(f(arg))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 /**
@@ -62,7 +78,12 @@ fun <A, R> safeCall(f: (A) -> R): (A) -> Result<R> {
  * 15
  */
 fun <A, R> logCalls(name: String, f: (A) -> R): (A) -> R {
-    TODO()
+    return { arg: A ->
+        println("[$name] вызвана с аргументом: $arg")
+        val result = f(arg)
+        println("[$name] вернула результат: $result")
+        result
+    }
 }
 
 
@@ -80,8 +101,16 @@ fun <A, R> logCalls(name: String, f: (A) -> R): (A) -> R {
  * val safe = retry(5, unstable)
  * println(safe()) // ok
  */
-fun <T> retry(times: Int, f: () -> T): () -> T {
-    TODO()
+fun <T> retry(times: Int, f: () -> T): () -> T = {
+    (1..times).asSequence()
+        .map { attempt ->
+            runCatching { f() }
+                .onFailure {
+                }
+        }
+        .firstOrNull { it.isSuccess }
+        ?.getOrThrow()
+        ?: throw IllegalStateException("Не удалось выполнить после $times попыток")
 }
 
 /**
@@ -101,7 +130,13 @@ fun <T> retry(times: Int, f: () -> T): () -> T {
  * println(slowFn(10))
  */
 fun <A, R> timed(name: String, f: (A) -> R): (A) -> R {
-    TODO()
+    return { arg: A ->
+        val startTime = System.currentTimeMillis()
+        val result = f(arg)
+        val endTime = System.currentTimeMillis()
+        println("[$name] выполнено за ${endTime - startTime} мс")
+        result
+    }
 }
 
 /**
@@ -124,5 +159,13 @@ fun <A, R> timed(name: String, f: (A) -> R): (A) -> R {
  *
  */
 fun <A, R> memoizeWith(capacity: Int, f: (A) -> R): (A) -> R {
-    TODO()
+    val cache = object : LinkedHashMap<A, R>(capacity, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<A, R>?): Boolean {
+            return size > capacity
+        }
+    }
+
+    return { arg: A ->
+        cache.getOrPut(arg) { f(arg) }
+    }
 }
