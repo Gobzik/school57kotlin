@@ -4,49 +4,52 @@
 Найти все строки со словом ERROR во всех логах в каталоге logs (включая logs/old) и сохранить их в файл errors.txt в корне проекта.
 
 ```bash
-TODO()
+grep -r "ERROR" > errors.txt
 ```
 
 ## Задание 2. Архивация старых логов
 Создать каталог archived/ в корне проекта и переместить туда все файлы из logs/old.
 
 ```bash
-TODO()
+mv logs/old/ ../archived
 ```
 
 ## Задание 3. Подсчёт размера логов
 Посчитать общий размер каталога logs и записать результат в logs_size.txt.
 
 ```bash
-TODO()
+du -sh > logs_size.txt
 ```
 
 ## Задание 4. Нахождение самого большого лог-файла
 Найти самый большой файл в каталоге logs (без учёта подкаталогов) и записать его имя в файл biglog.txt.
 
 ```bash
-TODO()
+find . -maxdepth 1 -type f -exec du -a {} + | sort -n -r | head -n 1 > ../biglog.txt
+
 ```
 
 ## Задание 5. Подсчёт количества логов
 Подсчитать количество файлов с расширением .log во всём каталоге logs и сохранить результат в log_count.txt.
 
 ```bash
-TODO()
+$ find logs -name "*.logs" -type f | wc -l > log_count.txt
+
 ```
 
 ## Задание 6. Поиск конфигурационных параметров
 Найти во всех config/*.conf строки, содержащие слово "host", и записать в host_params.txt.
 
 ```bash
-TODO()
+grep -r "host" config/*.conf > host_params.txt
 ```
 
 ## Задание 7. Создание резервного архива конфигов
 Создать zip-архив config_backup.zip, содержащий все файлы из config/.
 
 ```bash
-TODO()
+(tar -czf config_backup.tar.gz config/) для tar архива/
+(Compress-Archive -Path 'config' -DestinationPath 'config_backup.zip') PS
 ```
 
 ## Задание 8. Создание общего резервного архива
@@ -55,15 +58,15 @@ TODO()
 - все *.log из logs (включая old/)
 - файл errors.txt (если он есть)
 
-```bash
-TODO()
+```bash 
+$files = @(); $files += Get-ChildItem config\*.conf -ErrorAction SilentlyContinue; $files += 'logs'; if (Test-Path errors.txt) { $files += 'errors.txt' }; if ($files) { Compress-Archive -Path $files -DestinationPath project_backup.zip }
 ```
 
 ## Задание 9. Очистка пустых строк в логах
 Создать файл cleaned_app.log, содержащий содержимое app.log без пустых строк.
 
 ```bash
-TODO()
+grep -v '^$' logs/app.logs > cleaned_app.lo
 ```
 
 ## Задание 10. Подсчёт количества строк в каждом конфиге
@@ -73,7 +76,7 @@ db.conf 8
 (где число — количество строк в файле)
 
 ```bash
-TODO()
+for file in config/*.conf; do printf "%-20s %d\n" "$file" "$(wc -l < "$file")" >> conf_stats.txt; done
 ```
 
 
