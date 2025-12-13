@@ -23,7 +23,6 @@ fun <A, R> limitRate(intervalMs: Long, f: (A) -> R): (A) -> R? {
     TODO()
 }
 
-
 /**
  * Реализуй декоратор safeCall(f: (A) -> R): (A) -> Result<R>
  *
@@ -64,7 +63,6 @@ fun <A, R> safeCall(f: (A) -> R): (A) -> Result<R> {
 fun <A, R> logCalls(name: String, f: (A) -> R): (A) -> R {
     TODO()
 }
-
 
 /**
  * Ретрай-обёртка.

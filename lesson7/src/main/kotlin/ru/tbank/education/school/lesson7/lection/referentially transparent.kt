@@ -9,7 +9,6 @@ fun ticksElapsedFrom(year: Int): Long {
     return ChronoUnit.NANOS.between(then, now)
 }
 
-
 fun ticksElapsedFrom(year: Int, now: LocalDateTime): Long {
     val then = LocalDateTime.of(year, 1, 1, 0, 0)
     return ChronoUnit.NANOS.between(then, now)

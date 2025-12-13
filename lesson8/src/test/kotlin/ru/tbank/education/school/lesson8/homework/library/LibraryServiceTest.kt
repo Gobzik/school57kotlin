@@ -53,6 +53,9 @@ class LibraryServiceTest {
     @Test
     @DisplayName("Нельзя вернуть книгу, которая не была выдана")
     fun cannotReturnNotBorrowedBook() {
+        val book = Book("1984", "George Orwell", "978-0-452-28423-4")
+        library.addBook(book)
+
         assertThrows(IllegalArgumentException::class.java) {
             library.returnBook("978-0-452-28423-4")
         }
@@ -87,7 +90,7 @@ class LibraryServiceTest {
         library.borrowBook("978-0-441-17271-9", "Alice")
 
         val fine = library.calculateOverdueFine("978-0-441-17271-9", daysOverdue = 15)
-        assertEquals(300, fine)
+        assertEquals(300, fine) // (15 - 10) * 60 = 300
     }
 
     @Test
@@ -98,10 +101,15 @@ class LibraryServiceTest {
 
         library.addBook(book1)
         library.addBook(book2)
+
         library.borrowBook("978-0-452-28423-4", "Ivan")
+        library.addFineToBorrower("978-0-452-28423-4", daysOverdue = 15) // Начисляем штраф 300
+        library.returnBook("978-0-452-28423-4")
 
         assertThrows(IllegalArgumentException::class.java) {
             library.borrowBook("978-0-441-17271-9", "Ivan")
         }
+
+        assertEquals(300, library.getBorrowerFine("Ivan"))
     }
 }

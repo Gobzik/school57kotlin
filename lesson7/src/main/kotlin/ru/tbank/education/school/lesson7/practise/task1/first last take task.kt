@@ -1,6 +1,5 @@
 package ru.tbank.education.school.lesson7.practise.task1
 
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**

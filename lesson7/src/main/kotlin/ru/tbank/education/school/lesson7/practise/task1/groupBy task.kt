@@ -1,4 +1,4 @@
-package ru.tbank.education.school.lesson7.practise.task1// 6) GROUPBY — топ категорий по расходам
+package ru.tbank.education.school.lesson7.practise.task1 // 6) GROUPBY — топ категорий по расходам
 
 /**
  * Задание: Найди топ-3 категорий по расходам.

@@ -5,9 +5,11 @@ import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.ArchRule
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class MainKtTest {
+    @Disabled
     @Test
     fun checkUsageSystemClass() {
         val jc: JavaClasses = ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)

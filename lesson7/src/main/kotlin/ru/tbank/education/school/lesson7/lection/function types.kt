@@ -27,6 +27,9 @@ fun main() {
 
     // Функция, возвращающая другую функцию
     val multiplier: (Int) -> ((Int) -> Int) = { factor ->
-        { number -> number * factor }
+        {
+                number ->
+            number * factor
+        }
     }
 }

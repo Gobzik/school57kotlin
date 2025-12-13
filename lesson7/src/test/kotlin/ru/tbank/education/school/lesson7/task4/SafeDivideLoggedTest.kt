@@ -3,8 +3,6 @@ package ru.tbank.education.school.lesson7.task4
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import ru.tbank.education.school.lesson7.practise.task4.safeDivideLogged
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
 
 class SafeDivideLoggedTest {
 
