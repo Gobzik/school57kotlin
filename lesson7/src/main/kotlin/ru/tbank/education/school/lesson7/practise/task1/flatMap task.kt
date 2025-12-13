@@ -16,5 +16,16 @@ data class OrderItem(val productId: String, val quantity: Int, val pricePerUnit:
 data class LineItem(val orderId: String, val productId: String, val quantity: Int, val total: Double, val totalWithTax: Double)
 
 fun expandOrders(orders: List<Order>, tax: Double = 0.20): List<LineItem> {
-    TODO()
+    return orders.flatMap { order ->
+        order.items.map { item ->
+            val total = item.quantity * item.pricePerUnit
+            val totalWithTax = total * (1 + tax)
+            LineItem(
+                orderId = order.id,
+                productId = item.productId,
+                quantity = item.quantity,
+                total = total,
+                totalWithTax = totalWithTax,
+            )
+        }  }
 }
