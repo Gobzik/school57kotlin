@@ -1,3 +1,5 @@
+@file:Suppress("IDENTITY_SENSITIVE_OPERATIONS_WITH_VALUE_TYPE")
+
 package ru.tbank.education.school.lesson7.practise.task1
 
 import java.time.LocalDate
@@ -22,5 +24,14 @@ fun sliceEvents(
     events: List<Event>,
     nToday: Int
 ): Triple<Event?, List<Event>, List<Event>> {
-    TODO()
+    val firstError = events.firstOrNull { it.type == EventType.ERROR }
+
+    val loginEvents = events.filter { it.type == EventType.LOGIN }
+    val lastTwoLogins = loginEvents.takeLast(2)
+
+    val today = LocalDate.now()
+    val todayEvents = events.filter { it.date.toLocalDate() == today }
+    val firstNToday = todayEvents.take(nToday)
+
+    return Triple(firstError, lastTwoLogins, firstNToday)
 }
