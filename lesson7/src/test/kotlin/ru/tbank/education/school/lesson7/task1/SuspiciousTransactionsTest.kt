@@ -77,7 +77,7 @@ class SuspiciousTransactionsTest {
     fun `операции могут попадать под несколько критериев одновременно`() {
         val txs = listOf(
             Tx(8000.0, TxCategory.CRYPTO, now, "US"), // подходит по всем условиям
-            Tx(100.0, TxCategory.CRYPTO, now, "RU"),  // подходит по категории
+            Tx(100.0, TxCategory.CRYPTO, now, "RU"), // подходит по категории
             Tx(9000.0, TxCategory.SHOPPING, now, "RU") // подходит по сумме
         )
 

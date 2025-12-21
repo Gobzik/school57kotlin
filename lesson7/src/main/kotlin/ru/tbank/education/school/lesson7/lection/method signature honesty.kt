@@ -1,8 +1,8 @@
 package ru.tbank.education.school.lesson7.lection
 
-//fun divide(x: Int, y: Int): Int {
+// fun divide(x: Int, y: Int): Int {
 //    return x / y
-//}
+// }
 
 fun divide(x: Int, y: Int): Int? {
     return if (y == 0) null else x / y

@@ -15,6 +15,5 @@ package ru.tbank.education.school.lesson7.practise.task3
  * ```
  */
 
-
 // Инфиксная функция для проверки наличия роли
 infix fun User.hasRole(role: String): Boolean = TODO()

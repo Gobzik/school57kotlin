@@ -1,5 +1,7 @@
 package ru.tbank.education.school.lesson8.homework.payments
 
+import java.time.YearMonth
+
 class PaymentProcessor {
 
     /**
@@ -44,7 +46,6 @@ class PaymentProcessor {
             throw IllegalArgumentException("Customer ID cannot be blank")
         }
 
-        // Проверка на подозрительные карты (например, тестовые номера)
         if (isSuspiciousCard(cardNumber)) {
             log("FRAUD_BLOCKED", "Suspicious card detected: $cardNumber")
             return PaymentResult("REJECTED", "Payment blocked due to suspected fraud")
@@ -63,7 +64,6 @@ class PaymentProcessor {
             }
         }
 
-        // Имитация шлюза — логика внутри
         val gatewayResult = tryChargeGateway(cardNumber, convertedAmount)
 
         return when {
@@ -77,6 +77,11 @@ class PaymentProcessor {
                     gatewayResult.message?.contains("card blocked", ignoreCase = true) == true -> {
                         log("FAILED", "Payment failed: card is blocked")
                         PaymentResult("FAILED", "Card is blocked")
+                    }
+
+                    gatewayResult.message?.contains("transaction limit", ignoreCase = true) == true -> {
+                        log("FAILED", "Payment failed: transaction limit exceeded")
+                        PaymentResult("FAILED", "Transaction limit exceeded")
                     }
 
                     else -> {
@@ -96,22 +101,23 @@ class PaymentProcessor {
     /**
      * Проверяет, действителен ли срок действия карты.
      */
-    private fun isValidExpiry(month: Int, year: Int): Boolean {
-        val currentYear = 2025
-        val currentMonth = 11
+    fun isValidExpiry(month: Int, year: Int): Boolean {
+        if (month !in 1..12) return false
+
+        val currentYear = YearMonth.now().year
+        val currentMonth = YearMonth.now().monthValue
 
         return when {
             year < currentYear -> false
-            year == currentYear -> month in 1..12 && month >= currentMonth
-            year > currentYear -> month in 1..12
-            else -> false
+            year == currentYear -> month >= currentMonth
+            else -> true
         }
     }
 
     /**
      * Проверка на подозрительные номера карт (например, тестовые)
      */
-    private fun isSuspiciousCard(cardNumber: String): Boolean {
+    fun isSuspiciousCard(cardNumber: String): Boolean {
         val suspiciousPrefixes = listOf("4444", "5555", "1111", "9999")
         return suspiciousPrefixes.any { cardNumber.startsWith(it) } ||
                 isLuhnInvalid(cardNumber)
@@ -120,7 +126,7 @@ class PaymentProcessor {
     /**
      * Проверка номера карты по алгоритму Луна.
      */
-    private fun isLuhnInvalid(cardNumber: String): Boolean {
+    fun isLuhnInvalid(cardNumber: String): Boolean {
         if (cardNumber.length < 13) return true
 
         var sum = 0
@@ -143,8 +149,7 @@ class PaymentProcessor {
     /**
      * Имитация внешнего шлюза — внутренняя логика
      */
-    private fun tryChargeGateway(cardNumber: String, amount: Int): GatewayResult {
-        // Имитация случайных сбоев
+    fun tryChargeGateway(cardNumber: String, amount: Int): GatewayResult {
         if (amount > 100_000) {
             return GatewayResult(false, "Transaction limit exceeded")
         }
@@ -157,7 +162,6 @@ class PaymentProcessor {
             return GatewayResult(false, "Insufficient funds")
         }
 
-        // 5% шанс случайной ошибки
         if (amount % 17 == 0) {
             return GatewayResult(false, "Gateway timeout")
         }
@@ -174,7 +178,7 @@ class PaymentProcessor {
         }
 
         return when {
-            points >= 10_000 -> minOf((baseAmount * 0.2).toInt(), 5000) // макс. 5000
+            points >= 10_000 -> minOf((baseAmount * 0.2).toInt(), 5000)
             points >= 5_000 -> minOf((baseAmount * 0.15).toInt(), 3000)
             points >= 2_000 -> minOf((baseAmount * 0.1).toInt(), 1500)
             points >= 500 -> minOf((baseAmount * 0.05).toInt(), 500)
@@ -210,9 +214,11 @@ class PaymentProcessor {
             } catch (e: IllegalArgumentException) {
                 log("REJECTED", "Invalid data at index $index: ${e.message}")
                 results.add(PaymentResult("REJECTED", e.message ?: "Invalid input"))
+                failCount++
             } catch (e: Exception) {
                 log("CRITICAL", "Unexpected error at index $index: ${e.message}")
                 results.add(PaymentResult("FAILED", "Internal error"))
+                failCount++
             }
         }
 

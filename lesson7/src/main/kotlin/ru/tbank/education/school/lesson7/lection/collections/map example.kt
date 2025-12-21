@@ -24,5 +24,4 @@ fun main() {
         .map { "${it.date} (${it.temperature}°C)" }
 
     println(hotDays)
-
 }

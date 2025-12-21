@@ -104,7 +104,6 @@ fun areAllPositive(numbers: List<Int>): Boolean {
     return allPositive
 }
 
-
 /**
  * Задание 8.
  * Подсчитай количество слов длиной больше 3 символов.
@@ -159,7 +158,6 @@ fun mergeLists(list1: List<Int>, list2: List<Int>): List<Int> {
     for (b in list2) result.add(b)
     return result
 }
-
 
 /**
  * Задание 12.
