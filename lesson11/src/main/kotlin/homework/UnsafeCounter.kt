@@ -15,10 +15,13 @@ import java.util.concurrent.atomic.AtomicInteger
 class UnsafeCounter {
 
     private var value = 0
+    private val mutex = Mutex()
 
     suspend fun increment() {
-        delay(1)
-        value++
+        delay(1) //(тесты будут очень долгими ~ 3 min)
+        mutex.withLock {
+            value++
+        }
     }
 
     fun getValue(): Int = value
